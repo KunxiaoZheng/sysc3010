@@ -4,43 +4,114 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.Random;
 
 public class Server {
+	static final private boolean AUTO_DEMO = true;
 	static final private int PORT = 55555;
+	static final private int MAX_SCORE = 20;
 	static boolean VERBOSE_ENABLED = true;
 	static final private int MAX_PACKET_SIZE = 100;
 	static final private int PLAYER_COUNT = 2;
-	static private int score[] = new int[PLAYER_COUNT];
-	static private DatagramSocket socket;
-	static private DatagramPacket packet;
+	static private int mScore[] = new int[PLAYER_COUNT];
+	static private DatagramSocket mSocket;
+	static private DatagramPacket mPacket;
+	static private Random rnd = new Random();
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
 		run();
 	}
 
-	private static void testConsole() {
+	private static void run() {
+		init();
+		restart();
+
+		while (true) {
+			int playerId = getNextPlayerId();
+
+			if (playerId < 0) {
+				// Skip over invalid player IDs
+				continue;
+			}
+
+			int score = addScore(playerId);
+
+			// Check for win and update UI
+			if (score == MAX_SCORE) {
+				showWin(playerId);
+				pause(5000);
+				restart();
+			} else if (score >= 0) {
+				updateUi();
+			}
+		}
+	}
+
+	private static int getNextPlayerId() {
+		if (AUTO_DEMO) {
+			pause(250);
+			return rnd.nextInt(PLAYER_COUNT);
+		}
+
+		try {
+			mSocket.receive(mPacket);
+			int playerId = mPacket.getData()[0];
+			if (playerId >= 0 && playerId < PLAYER_COUNT) {
+				return playerId;
+			} else {
+				return -1;
+			}
+		} catch (IOException e) {
+			verbose("Error receiving packet");
+			return -1;
+		}
+	}
+
+	private static void init() {
+		// Create socket
+		try {
+			mSocket = new DatagramSocket(PORT);
+			verbose("Connected to port: " + mSocket.getLocalPort());
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}
+
+		// Setup receive buffer
+		byte[] buffer = new byte[MAX_PACKET_SIZE];
+		mPacket = new DatagramPacket(buffer, buffer.length);
+	}
+
+	private static int addScore(int playerId) {
+		if (playerId < 0 || playerId >= PLAYER_COUNT) {
+			// Ignore invalid player IDs
+			return 0;
+		}
+
+		return mScore[playerId]++;
+	}
+
+	private static void showWin(int playerId) {
 		clearScreen();
-		println("*");
-		println("****");
-		pause(1000);
+		println("Player " + (playerId + 1) + " wins.");
+	}
+
+	private static void restart() {
+		for (int i = 0; i < PLAYER_COUNT; i++) {
+			mScore[i] = 0;
+		}
 
 		clearScreen();
-		println("**");
-		println("****");
-		pause(1000);
+		println("New game started");
+	}
 
+	private static void updateUi() {
 		clearScreen();
-		println("***");
-		println("****");
-		pause(1000);
-
-		clearScreen();
-		println("****");
-		println("****");
-		pause(1000);
+		for (int score : mScore) {
+			for (int i = 0; i < score; i++) {
+				System.out.print('*');
+			}
+			System.out.println();
+		}
 	}
 
 	private static void println(String message) {
@@ -57,57 +128,6 @@ public class Server {
 			Thread.sleep(time);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		}
-	}
-
-	private static void addScore(int playerId) {
-		score[playerId]++;
-	}
-
-	private static void resetScore() {
-		for (int i : score) {
-			score[i] = 0;
-		}
-	}
-
-	private static void refreshScreen() {
-		// TODO
-	}
-
-	private static void listen() {
-		try {
-			socket.receive(packet);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		println("received packet");
-	}
-
-	private static void init() {
-		// Create socket
-		try {
-			socket = new DatagramSocket(PORT);
-			verbose("Connected to port: " + socket.getLocalPort());
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		// Setup receive buffer
-		byte[] buffer = new byte[MAX_PACKET_SIZE];
-		packet = new DatagramPacket(buffer, buffer.length);
-	}
-	
-	private static void run() {
-		init();
-		
-		boolean game_over = false;
-		
-		while(!game_over) {
-			listen();
-			game_over = true;
 		}
 	}
 
