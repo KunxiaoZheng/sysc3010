@@ -27,7 +27,7 @@ previous_status = ''
 
 try:
 	while button_press>0:
-		GPIO.wait_for_edge(23, GPIO.FALLING)
+		GPIO.wait_for_edge(23, GPIO.RISING)
 		print "\n Falling edge detected."
 		#put the code for sending packets at here
 
