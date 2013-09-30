@@ -3,7 +3,7 @@
 import pifacecommon
 import time
 
-quit = 0
+count = 0
 
 def pressed_button(event):
     print('*', end='')
@@ -26,7 +26,7 @@ listener.register(0, pifacecommon.interrupts.IODIR_ON, pressed_button)
 listener.activate()
 
 # hang around until counter hits 20.
-while quit < 20:
+while count < 20:
     time.sleep(1)
 
 #closes the listener
