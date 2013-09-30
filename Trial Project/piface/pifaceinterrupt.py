@@ -3,11 +3,18 @@
 import pifacecommon
 import time
 import os
+import socket
 
 quit = False
 
 def pressed_button(event):
-	#Enter UDP packet stuff here.
+    #Enter UDP packet stuff here.
+    UDP_IP = "10.0.0.1"
+    UDP_PORT = 55555
+       
+    
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(getBytes("1"), (UDP_IP, UDP_PORT)) #message has to be converted to bytes.
 
 def pressed_quit(event):
     global quit
